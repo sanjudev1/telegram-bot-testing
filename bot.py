@@ -69,6 +69,12 @@ async def webhook_update(update: dict):
     update = Update.de_json(update, application.bot)
     await application.process_update(update)
 
+# Health Check Route
+@app.route("/")
+def health_check():
+    """Health check endpoint to verify the server is running."""
+    return "Bot is running!", 200  # ✅ Render will receive a 200 response
+
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     """Receives updates from Telegram Webhook."""
@@ -88,4 +94,5 @@ if __name__ == "__main__":
         application.run_polling()
     else:
         print(f"Bot is running in webhook mode on {RENDER_URL}")
+        application.bot.setWebhook(f"{RENDER_URL}/{TOKEN}")
         app.run(host="0.0.0.0", port=PORT)
