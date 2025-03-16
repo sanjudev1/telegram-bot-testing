@@ -10,6 +10,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 PORT = int(os.getenv("PORT", 10000))
 RENDER_URL = os.getenv("RENDER_URL")  # For webhook deployment
 
+
 # Initialize Flask App
 app = Flask(__name__)
 application = Application.builder().token(TOKEN).build()
@@ -77,9 +78,11 @@ def webhook():
 
 def get_app(environ, start_response):
     """Gunicorn expects a WSGI application callable."""
+    print(PORT,TOKEN,RENDER_URL)
     return app(environ, start_response)
 
 if __name__ == "__main__":
+    print(PORT,TOKEN,RENDER_URL)
     if os.getenv("MODE", "polling") == "polling":
         print("Bot is running in polling mode...")
         application.run_polling()
