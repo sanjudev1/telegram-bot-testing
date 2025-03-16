@@ -3,18 +3,23 @@ import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 PORT = int(os.getenv("PORT", 8000))
-RENDER_URL = os.getenv("RENDER_URL")  # For webhook deployment
+RENDER_URL = os.getenv("RENDER_URL")  # Webhook URL from Render
+MODE = os.getenv("MODE", "polling")
 
-# Initialize Flask App
+if not TOKEN:
+    raise ValueError("BOT_TOKEN environment variable is missing!")
+
+# Initialize Flask App & Telegram Bot Application
 app = Flask(__name__)
 application = Application.builder().token(TOKEN).build()
 
+# Define bot commands
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends a welcome message with available commands."""
     await update.message.reply_text(
@@ -55,7 +60,7 @@ async def amrutha_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     """Sends the Amrutha cover song link."""
     await update.message.reply_text("🎵 Amrutha Cover Song: https://www.youtube.com/watch?v=lIo46bYftZE")
 
-# Register Handlers
+# Register command handlers
 application.add_handler(CommandHandler('start', start))
 application.add_handler(CommandHandler('help', help_command))
 application.add_handler(CommandHandler('content', content))
@@ -64,37 +69,35 @@ application.add_handler(CommandHandler('kingfisher_video', kingfisher_video))
 application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 
 # Webhook Setup
-async def webhook_update(update: dict):
-    """Handles incoming Telegram updates."""
-    update = Update.de_json(update, application.bot)
+async def webhook_update(update_data: dict):
+    """Handles incoming Telegram updates from webhook."""
+    update = Update.de_json(update_data, application.bot)
     await application.process_update(update)
 
-# Health Check Route
-@app.route("/")
+# Flask Routes
+@app.route("/", methods=["GET"])
 def health_check():
     """Health check endpoint to verify the server is running."""
-    return "Bot is running!", 200  # ✅ Render will receive a 200 response
+    return jsonify({"status": "Bot is running!"}), 200
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     """Receives updates from Telegram Webhook."""
-    update = request.get_json()
-    asyncio.create_task(webhook_update(update))  # ✅ Fix for async task handling
-    return "OK", 200
+    update_data = request.get_json()
+    asyncio.ensure_future(webhook_update(update_data))
+    return jsonify({"status": "OK"}), 200
 
-def get_app(environ, start_response):
+def get_app():
     """Gunicorn expects a WSGI application callable."""
-    print(PORT, TOKEN, RENDER_URL)
-    return app(environ, start_response)
+    return app
 
 if __name__ == "__main__":
-    print(PORT, TOKEN, RENDER_URL)
-    mode = os.getenv("MODE", "polling")
+    print(f"Starting bot in {MODE} mode on port {PORT}...")
 
-    if mode == "polling":
+    if MODE == "polling":
         print("Bot is running in polling mode...")
-        asyncio.run(application.run_polling())  # ✅ Ensures event loop runs properly
+        application.run_polling()
     else:
         print(f"Bot is running in webhook mode on {RENDER_URL}")
-        asyncio.run(application.bot.setWebhook(f"{RENDER_URL}/{TOKEN}"))  # ✅ Fix for async webhook setup
+        asyncio.run(application.bot.setWebhook(f"{RENDER_URL}/{TOKEN}"))
         app.run(host="0.0.0.0", port=PORT)
