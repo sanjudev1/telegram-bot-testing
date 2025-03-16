@@ -75,9 +75,9 @@ def webhook():
     application.create_task(webhook_update(update))
     return "OK", 200
 
-def get_app():
-    """Returns the Flask app for Gunicorn."""
-    return app
+def get_app(environ, start_response):
+    """Gunicorn expects a WSGI application callable."""
+    return app(environ, start_response)
 
 if __name__ == "__main__":
     if os.getenv("MODE", "polling") == "polling":
