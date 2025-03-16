@@ -81,15 +81,14 @@ def health_check():
     return jsonify({"status": "Bot is running!"}), 200
 
 @app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
+async def webhook():
     """Receives updates from Telegram Webhook."""
     update_data = request.get_json()
-    asyncio.ensure_future(webhook_update(update_data))
+    await webhook_update(update_data)  # Use `await` instead of `asyncio.ensure_future`
     return jsonify({"status": "OK"}), 200
 
-def get_app():
-    """Gunicorn expects a WSGI application callable."""
-    return app
+# Fix: Assign the Flask app as a WSGI application callable for Gunicorn
+get_app = app
 
 if __name__ == "__main__":
     print(f"Starting bot in {MODE} mode on port {PORT}...")
