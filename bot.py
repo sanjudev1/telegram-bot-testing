@@ -68,7 +68,7 @@ application.add_handler(CommandHandler('chitti_video', chitti_video))
 application.add_handler(CommandHandler('kingfisher_video', kingfisher_video))
 application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 
-# Webhook Setup
+# Webhook Update Handler
 async def webhook_update(update_data: dict):
     """Handles incoming Telegram updates from webhook."""
     update = Update.de_json(update_data, application.bot)
@@ -81,10 +81,10 @@ def health_check():
     return jsonify({"status": "Bot is running!"}), 200
 
 @app.route(f"/{TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
     """Receives updates from Telegram Webhook."""
     update_data = request.get_json()
-    await webhook_update(update_data)  # Use `await` instead of `asyncio.ensure_future`
+    asyncio.run(webhook_update(update_data))  # ✅ Properly handling async inside sync function
     return jsonify({"status": "OK"}), 200
 
 # Fix: Assign the Flask app as a WSGI application callable for Gunicorn
