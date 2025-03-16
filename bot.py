@@ -1,4 +1,5 @@
 import os
+import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -9,7 +10,6 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 PORT = int(os.getenv("PORT", 8000))
 RENDER_URL = os.getenv("RENDER_URL")  # For webhook deployment
-
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -79,20 +79,22 @@ def health_check():
 def webhook():
     """Receives updates from Telegram Webhook."""
     update = request.get_json()
-    application.create_task(webhook_update(update))
+    asyncio.create_task(webhook_update(update))  # ✅ Fix for async task handling
     return "OK", 200
 
 def get_app(environ, start_response):
     """Gunicorn expects a WSGI application callable."""
-    print(PORT,TOKEN,RENDER_URL)
+    print(PORT, TOKEN, RENDER_URL)
     return app(environ, start_response)
 
 if __name__ == "__main__":
-    print(PORT,TOKEN,RENDER_URL)
-    if os.getenv("MODE", "polling") == "polling":
+    print(PORT, TOKEN, RENDER_URL)
+    mode = os.getenv("MODE", "polling")
+
+    if mode == "polling":
         print("Bot is running in polling mode...")
-        application.run_polling()
+        asyncio.run(application.run_polling())  # ✅ Ensures event loop runs properly
     else:
         print(f"Bot is running in webhook mode on {RENDER_URL}")
-        application.bot.setWebhook(f"{RENDER_URL}/{TOKEN}")
+        asyncio.run(application.bot.setWebhook(f"{RENDER_URL}/{TOKEN}"))  # ✅ Fix for async webhook setup
         app.run(host="0.0.0.0", port=PORT)
