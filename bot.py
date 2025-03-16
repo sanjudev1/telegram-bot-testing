@@ -84,7 +84,10 @@ def health_check():
 def webhook():
     """Receives updates from Telegram Webhook."""
     update_data = request.get_json()
-    asyncio.run(webhook_update(update_data))  # ✅ Properly handling async inside sync function
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(webhook_update(update_data))
+
     return jsonify({"status": "OK"}), 200
 
 # Fix: Assign the Flask app as a WSGI application callable for Gunicorn
