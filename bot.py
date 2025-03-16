@@ -7,7 +7,7 @@ from flask import Flask, request
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
-PORT = int(os.getenv("PORT", 10000))
+PORT = int(os.getenv("PORT", 8000))
 RENDER_URL = os.getenv("RENDER_URL")  # For webhook deployment
 
 
