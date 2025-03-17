@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from flask import Flask, request, jsonify
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 # Load environment variables
 load_dotenv()
@@ -83,10 +86,14 @@ def health_check():
 @app.route(f"/{TOKEN}", methods=["POST"])
 async def webhook():
     """Receives updates from Telegram Webhook."""
-    update_data = request.get_json()
-    asyncio.run(webhook_update(update_data))  # Ensures proper async execution
-    return jsonify({"status": "OK"}), 200
-
+    try:
+        update_data = request.get_json()
+        logging.info(f"Received update: {update_data}")
+        await webhook_update(update_data)
+        return jsonify({"status": "OK"}), 200
+    except Exception as e:
+        logging.error(f"Error processing webhook: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
 # Fix: Assign the Flask app as a WSGI application callable for Gunicorn
 get_app = app
 
