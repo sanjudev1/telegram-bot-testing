@@ -75,6 +75,9 @@ application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 async def webhook_update(update_data):
     """Handles incoming Telegram updates from webhook."""
     update = Update.de_json(update_data, application.bot)
+    if not application._initialized:
+        await application.initialize()
+
     await application.process_update(update)
 
 # Flask Routes
