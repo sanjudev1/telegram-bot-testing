@@ -72,7 +72,7 @@ application.add_handler(CommandHandler('kingfisher_video', kingfisher_video))
 application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 
 # Webhook Update Handler
-async def webhook_update():
+async def webhook_update(update_data):
     """Handles incoming Telegram updates from webhook."""
     update = Update.de_json(update_data, application.bot)
     await application.process_update(update)
