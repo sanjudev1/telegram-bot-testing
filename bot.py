@@ -70,10 +70,9 @@ application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 
 # Webhook Update Handler
 async def webhook_update():
-    """Receives updates from Telegram Webhook."""
-    update_data = request.get_json()
-    asyncio.run(webhook_update(update_data))  # Ensures proper async execution
-    return jsonify({"status": "OK"}), 200
+    """Handles incoming Telegram updates from webhook."""
+    update = Update.de_json(update_data, application.bot)
+    await application.process_update(update)
 
 # Flask Routes
 @app.route("/", methods=["GET"])
@@ -82,13 +81,10 @@ def health_check():
     return jsonify({"status": "Bot is running!"}), 200
 
 @app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
+async def webhook():
     """Receives updates from Telegram Webhook."""
     update_data = request.get_json()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(webhook_update(update_data))
-
+    asyncio.run(webhook_update(update_data))  # Ensures proper async execution
     return jsonify({"status": "OK"}), 200
 
 # Fix: Assign the Flask app as a WSGI application callable for Gunicorn
