@@ -69,12 +69,11 @@ application.add_handler(CommandHandler('kingfisher_video', kingfisher_video))
 application.add_handler(CommandHandler('amrutha_video', amrutha_video))
 
 # Webhook Update Handler
-async def webhook_update(update_data: dict):
-    """Handles incoming Telegram updates from webhook."""
-    update = Update.de_json(update_data, application.bot)
-    if not application._initialized:
-        application.initialize()
-    await application.process_update(update)
+async def webhook_update():
+    """Receives updates from Telegram Webhook."""
+    update_data = request.get_json()
+    asyncio.run(webhook_update(update_data))  # Ensures proper async execution
+    return jsonify({"status": "OK"}), 200
 
 # Flask Routes
 @app.route("/", methods=["GET"])
